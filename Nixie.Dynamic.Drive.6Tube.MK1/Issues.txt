@@ -1,0 +1,4 @@
+Issue 기록
+#000001 :	현상:	시간변경 버튼을 누르면 시스템이 멈추는 현상
+			원인:	Debouncing을 위해 Timer를 사용하는데, INT5_vect , INT6_vect 에서 Timer 관련 TIMSK 조작시 잘못된 연산을 수행함
+			해결:	TIMSK |= TOIEn; 을 TIMSK |=(1<<TOIEn); 으로 수정함

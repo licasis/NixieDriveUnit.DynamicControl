@@ -41,9 +41,9 @@ ISR(INT5_vect)
 		g_DebouncingTimerMINUTECounter = 0 ; //카운터 리셋
 		TCNT0 = 0; // 카운터 레지스터 리셋
 		TIFR &= ~(1<<TOV0); // (혹시나 걸렸을지도 모를....) 기존 Iterrupt flag를 초기화한다
-		TIMSK |=TOIE0;
+		TIMSK |=(1<<TOIE0); // Timer0 Overflow interrupt disable
 		((SwitchControl*)m_pDevices[NUM_SWITCH_CONTROL_DRIVER])->MinuteUp();
-		g_UpdateMINUTEFlag = 1;
+			g_UpdateMINUTEFlag = 1;
 	}
 	
 }
@@ -55,9 +55,9 @@ ISR(INT6_vect)
 		g_DebouncingTimerHOURCounter = 0 ; //카운터 리셋
 		TCNT2 = 0; // 카운터 레지스터 리셋
 		TIFR &= ~(1<<TOV2); // (혹시나 걸렸을지도 모를....) 기존 Iterrupt flag를 초기화한다
-		TIMSK |=TOIE2;
+		TIMSK |= (1<<TOIE2); // Timer2 Overflow interrupt disable
 		((SwitchControl*)m_pDevices[NUM_SWITCH_CONTROL_DRIVER])->hourUp();
-		g_UpdateHOURFlag = 1;
+			g_UpdateHOURFlag = 1;
 	}
 
 }
@@ -116,6 +116,8 @@ void SwitchControl::init(void *param1,void *param2,void *param3)
 	// TIMER INIT FOR Debouncing
 	TCCR0 = (1<<CS02)|(1<<CS01)|(1<<CS00); // Timer0 Pre Scaler = 1024 
 	TCCR2 = (1<<CS22)|(1<<CS21)|(1<<CS20); // Timer2 Pre Scaler = 1024 
+	TIMSK &= ~(1<<TOIE0);
+	TIMSK &= ~(1<<TOIE2);
 	
 #else 
 	DDRE &= ~(1<<PIN_HOUR_UP | 1<<PIN_MINUTE_UP); // INPUT Mode
