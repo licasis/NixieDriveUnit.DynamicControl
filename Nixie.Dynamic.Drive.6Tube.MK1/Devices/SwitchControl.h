@@ -12,6 +12,7 @@
 #define USE_INTERRUPT_SW
 
 #ifdef USE_INTERRUPT_SW
+
 #define PIN_MINUTE_UP INT5  // INT5 == PORTE5
 #define PIN_HOUR_UP INT6    // INT6 == PORTE6
 

@@ -16,10 +16,19 @@
 #include <avr/interrupt.h>
 extern ClockTime *m_pclockTime;
 
+
+#ifdef USE_INTERRUPT_SW
+
 volatile unsigned char g_DebouncingTimerMINUTECounter  =0 ;
 volatile unsigned char g_DebouncingMINUTEFlag  =0 ;
+volatile unsigned char g_UpdateMINUTEFlag  =0 ;
+
+
 volatile unsigned char g_DebouncingTimerHOURCounter  =0 ;
 volatile unsigned char g_DebouncingHOURFlag  =0 ;
+volatile unsigned char g_UpdateHOURFlag  =0 ;
+
+#endif
 
 #ifdef USE_INTERRUPT_SW
 
@@ -34,6 +43,7 @@ ISR(INT5_vect)
 		TIFR &= ~(1<<TOV0); // (혹시나 걸렸을지도 모를....) 기존 Iterrupt flag를 초기화한다
 		TIMSK |=TOIE0;
 		((SwitchControl*)m_pDevices[NUM_SWITCH_CONTROL_DRIVER])->MinuteUp();
+		g_UpdateMINUTEFlag = 1;
 	}
 	
 }
@@ -47,6 +57,7 @@ ISR(INT6_vect)
 		TIFR &= ~(1<<TOV2); // (혹시나 걸렸을지도 모를....) 기존 Iterrupt flag를 초기화한다
 		TIMSK |=TOIE2;
 		((SwitchControl*)m_pDevices[NUM_SWITCH_CONTROL_DRIVER])->hourUp();
+		g_UpdateHOURFlag = 1;
 	}
 
 }
@@ -59,6 +70,7 @@ ISR(TIMER0_OVF_vect) // ISR for Debouncing Minute Switch
 	{
 		g_DebouncingMINUTEFlag = 0;
 		TIMSK &= ~(1<<TOIE0);
+		g_UpdateMINUTEFlag =2; //2 means it ready to update RTC
 	}
 	else
 		g_DebouncingTimerMINUTECounter++;
@@ -69,6 +81,7 @@ ISR(TIMER2_OVF_vect) //ISR for Debouncing Minute Switch
 	{
 		g_DebouncingHOURFlag = 0;
 		TIMSK &= ~(1<<TOIE2);
+		g_UpdateHOURFlag =2;//2 means it ready to update RTC
 	}
 	else
 	g_DebouncingTimerHOURCounter++;

@@ -27,6 +27,10 @@ InterDevices *m_pDevices[100]={0};
 ClockTime *m_pclockTime=0;
 //TWIScanner *pScanner = 0;
 DS3231 *pRealTimeClock=0;
+extern volatile unsigned char g_UpdateHOURFlag;
+extern volatile unsigned char g_UpdateMINUTEFlag;
+
+
 int TimerCallback(void *);
 int main(void)
 {
@@ -120,11 +124,26 @@ int main(void)
     
 	while (1) 
 	{
+
 		loopCount++;
 
 		if(loopCount == 0x4F  )
 		{
-			tempDegree = m_brightControl.getDegree();
+
+#ifdef USE_INTERRUPT_SW
+			if(g_UpdateHOURFlag==2)
+			{
+				pRealTimeClock->updateHour(m_clockTime.getTimeHour());
+				g_UpdateHOURFlag = 0;
+			}
+				
+			if(g_UpdateMINUTEFlag==2)
+			{
+				pRealTimeClock->updateMinute(m_clockTime.getTimeMinute());
+				g_UpdateMINUTEFlag = 0;
+			}
+
+#else			
 			SwitchState = m_switchControl.getState();
 			if(SwitchState & 0x10)
 			{
@@ -153,6 +172,8 @@ int main(void)
 			{
 				isMinuteSW_On = 0;
 			}
+#endif // #ifndef USE_INTERRUPT_SW	
+			tempDegree = m_brightControl.getDegree();
 			m_dynamicDriver.setBright(tempDegree);
 			loopCount = 0;
 		}
