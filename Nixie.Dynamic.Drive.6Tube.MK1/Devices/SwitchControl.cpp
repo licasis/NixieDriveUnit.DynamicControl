@@ -84,7 +84,7 @@ ISR(TIMER2_OVF_vect) //ISR for Debouncing Minute Switch
 		g_UpdateHOURFlag =2;//2 means it ready to update RTC
 	}
 	else
-	g_DebouncingTimerHOURCounter++;
+		g_DebouncingTimerHOURCounter++;
 }
 	
 #endif
@@ -122,7 +122,7 @@ void SwitchControl::init(void *param1,void *param2,void *param3)
 #else 
 	DDRE &= ~(1<<PIN_HOUR_UP | 1<<PIN_MINUTE_UP); // INPUT Mode
 	PORTE |= ( 1<<PIN_HOUR_UP );  // PULL up , default state is High, 
-	PORTE |= 1<<(PIN_MINUTE_UP);
+	PORTE |= ( 1<<PIN_MINUTE_UP );
 	
 #endif
 	
