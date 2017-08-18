@@ -34,7 +34,8 @@ volatile unsigned char g_UpdateHOURFlag  =0 ;
 
 ISR(INT5_vect)
 {
-
+	if(g_DebouncingHOURFlag != 0)
+		return;
 	if(g_DebouncingMINUTEFlag==0)
 	{
 		g_DebouncingMINUTEFlag = 1; // 상태변경
@@ -46,16 +47,19 @@ ISR(INT5_vect)
 			g_UpdateMINUTEFlag = 1;
 	}
 	
+	
 }
 ISR(INT6_vect)
 {
+	if(g_DebouncingMINUTEFlag != 0)
+		return;
 	if(g_DebouncingHOURFlag==0)
 	{
 		g_DebouncingHOURFlag = 1; // 상태변경
 		g_DebouncingTimerHOURCounter = 0 ; //카운터 리셋
-		TCNT2 = 0; // 카운터 레지스터 리셋
-		TIFR &= ~(1<<TOV2); // (혹시나 걸렸을지도 모를....) 기존 Iterrupt flag를 초기화한다
-		TIMSK |= (1<<TOIE2); // Timer2 Overflow interrupt disable
+		TCNT0 = 0; // 카운터 레지스터 리셋
+		TIFR &= ~(1<<TOV0); // (혹시나 걸렸을지도 모를....) 기존 Iterrupt flag를 초기화한다
+		TIMSK |= (1<<TOIE0); // Timer2 Overflow interrupt disable
 		((SwitchControl*)m_pDevices[NUM_SWITCH_CONTROL_DRIVER])->hourUp();
 			g_UpdateHOURFlag = 1;
 	}
@@ -66,14 +70,29 @@ ISR(INT6_vect)
 ISR(TIMER0_OVF_vect) // ISR for Debouncing Minute Switch
 {
 	;
-	if(g_DebouncingTimerMINUTECounter >= DEBOUNCE_COUNT_MINUTE)
+	if(g_DebouncingMINUTEFlag)
 	{
-		g_DebouncingMINUTEFlag = 0;
-		TIMSK &= ~(1<<TOIE0);
-		g_UpdateMINUTEFlag =2; //2 means it ready to update RTC
+		if(g_DebouncingTimerMINUTECounter >= DEBOUNCE_COUNT_MINUTE)
+		{
+			g_DebouncingMINUTEFlag = 0;
+			TIMSK &= ~(1<<TOIE0);
+			g_UpdateMINUTEFlag =2; //2 means it ready to update RTC
+		}
+		else
+			g_DebouncingTimerMINUTECounter++;	
 	}
-	else
-		g_DebouncingTimerMINUTECounter++;
+	if(g_DebouncingHOURFlag)
+	{
+		if(g_DebouncingTimerHOURCounter >= DEBOUNCE_COUNT_HOUR)
+		{
+			g_DebouncingHOURFlag = 0;
+			TIMSK &= ~(1<<TOIE0);
+			g_UpdateHOURFlag =2; //2 means it ready to update RTC
+		}
+		else
+		g_DebouncingTimerHOURCounter++;
+	}
+
 }
 ISR(TIMER2_OVF_vect) //ISR for Debouncing Minute Switch
 {
